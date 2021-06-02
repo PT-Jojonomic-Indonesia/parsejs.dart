@@ -21,5 +21,5 @@ void main(List<String> args) {
       stderr.writeln(e);
       exit(1);
     }
-  });
+  } as FutureOr<String> Function(String));
 }

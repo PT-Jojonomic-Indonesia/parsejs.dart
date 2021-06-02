@@ -54,5 +54,5 @@ void main(List<String> cmdargs) {
       stderr.writeln(e);
       exit(1);
     }
-  });
+  } as FutureOr<String> Function(String));
 }
