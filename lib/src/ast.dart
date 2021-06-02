@@ -20,7 +20,7 @@ abstract class Node {
 
   /// Retrieves the filename from the enclosing [Program]. Returns null if the node is orphaned.
   String? get filename {
-    Program program = enclosingProgram!;
+    Program? program = enclosingProgram;
     if (program != null) return program.filename;
     return null;
   }
@@ -30,20 +30,20 @@ abstract class Node {
 
   /// Returns the [Program] node enclosing this node, possibly the node itself, or null if not enclosed in any program.
   Program? get enclosingProgram {
-    Node node = this;
+    Node? node = this;
     while (node != null) {
       if (node is Program) return node;
-      node = node.parent!;
+      node = node.parent;
     }
     return null;
   }
 
   /// Returns the [FunctionNode] enclosing this node, possibly the node itself, or null if not enclosed in any function.
   FunctionNode? get enclosingFunction {
-    Node node = this;
+    Node? node = this;
     while (node != null) {
       if (node is FunctionNode) return node;
-      node = node.parent!;
+      node = node.parent;
     }
     return null;
   }
@@ -62,7 +62,7 @@ abstract class Node {
 /// can host local variables.
 abstract class Scope extends Node {
   /// Variables declared in this scope, including the implicitly declared "arguments" variable.
-  Set<String>? environment;
+  Set<String?>? environment;
 }
 
 /// A collection of [Program] nodes.
@@ -129,7 +129,7 @@ class Name extends Node {
   /// Name being referenced.
   ///
   /// Unicode values have been resolved.
-  String value;
+  String? value;
 
   /// Link to the enclosing [FunctionExpression], [Program], or [CatchClause] where this variable is declared
   /// (defaults to [Program] if undeclared), or `null` if this is not a variable.
@@ -202,8 +202,8 @@ class ExpressionStatement extends Statement {
   String toString() => 'ExpressionStatement';
 
   visitBy<T>(Visitor<T> v) => v.visitExpressionStatement(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
-      v.visitExpressionStatement(this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitExpressionStatement(
+      this, arg);
 }
 
 /// Statement of form: `if ([condition]) then [then] else [otherwise]`.
@@ -246,12 +246,12 @@ class LabeledStatement extends Statement {
 
 /// Statement of form: `break;` or `break [label];`
 class BreakStatement extends Statement {
-  Name label; // May be null.
+  Name? label; // May be null.
 
   BreakStatement(this.label);
 
   forEach(callback) {
-    if (label != null) callback(label);
+    if (label != null) callback(label!);
   }
 
   String toString() => 'BreakStatement';
@@ -262,12 +262,12 @@ class BreakStatement extends Statement {
 
 /// Statement of form: `continue;` or `continue [label];`
 class ContinueStatement extends Statement {
-  Name label; // May be null.
+  Name? label; // May be null.
 
   ContinueStatement(this.label);
 
   forEach(callback) {
-    if (label != null) callback(label);
+    if (label != null) callback(label!);
   }
 
   String toString() => 'ContinueStatement';
@@ -336,11 +336,11 @@ class SwitchCase extends Node {
 
 /// Statement of form: `return [argument];` or `return;`
 class ReturnStatement extends Statement {
-  Expression argument;
+  Expression? argument;
 
   ReturnStatement(this.argument);
 
-  forEach(callback) => argument != null ? callback(argument) : null;
+  forEach(callback) => argument != null ? callback(argument!) : null;
 
   String toString() => 'ReturnStatement';
 
@@ -365,15 +365,15 @@ class ThrowStatement extends Statement {
 /// Statement of form: `try [block] catch [handler] finally [finalizer]`.
 class TryStatement extends Statement {
   BlockStatement block;
-  CatchClause handler; // May be null
-  BlockStatement finalizer; // May be null (but not if handler is null)
+  CatchClause? handler; // May be null
+  BlockStatement? finalizer; // May be null (but not if handler is null)
 
   TryStatement(this.block, this.handler, this.finalizer);
 
   forEach(callback) {
     callback(block);
-    if (handler != null) callback(handler);
-    if (finalizer != null) callback(finalizer);
+    if (handler != null) callback(handler!);
+    if (finalizer != null) callback(finalizer!);
   }
 
   String toString() => 'TryStatement';
@@ -439,17 +439,17 @@ class DoWhileStatement extends Statement {
 /// Statement of form: `for ([init]; [condition]; [update]) [body]`
 class ForStatement extends Statement {
   /// May be VariableDeclaration, Expression, or null.
-  Node init;
-  Expression condition; // May be null.
-  Expression update; // May be null.
+  Node? init;
+  Expression? condition; // May be null.
+  Expression? update; // May be null.
   Statement body;
 
   ForStatement(this.init, this.condition, this.update, this.body);
 
   forEach(callback) {
-    if (init != null) callback(init);
-    if (condition != null) callback(condition);
-    if (update != null) callback(update);
+    if (init != null) callback(init!);
+    if (condition != null) callback(condition!);
+    if (update != null) callback(update!);
     callback(body);
   }
 
@@ -491,8 +491,8 @@ class FunctionDeclaration extends Statement {
   String toString() => 'FunctionDeclaration';
 
   visitBy<T>(Visitor<T> v) => v.visitFunctionDeclaration(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
-      v.visitFunctionDeclaration(this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitFunctionDeclaration(
+      this, arg);
 }
 
 /// Statement of form: `var [declarations];`
@@ -506,27 +506,27 @@ class VariableDeclaration extends Statement {
   String toString() => 'VariableDeclaration';
 
   visitBy<T>(Visitor<T> v) => v.visitVariableDeclaration(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
-      v.visitVariableDeclaration(this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitVariableDeclaration(
+      this, arg);
 }
 
 /// Variable declaration: `[name]` or `[name] = [init]`.
 class VariableDeclarator extends Node {
   Name name;
-  Expression init; // May be null.
+  Expression? init; // May be null.
 
   VariableDeclarator(this.name, this.init);
 
   forEach(callback) {
     callback(name);
-    if (init != null) callback(init);
+    if (init != null) callback(init!);
   }
 
   String toString() => 'VariableDeclarator';
 
   visitBy<T>(Visitor<T> v) => v.visitVariableDeclarator(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
-      v.visitVariableDeclarator(this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitVariableDeclarator(
+      this, arg);
 }
 
 /// Statement of form: `debugger;`
@@ -556,17 +556,15 @@ class ThisExpression extends Expression {
 
 /// Expression of form: `[ [expressions] ]`
 class ArrayExpression extends Expression {
-  List<Expression?>?
+  List<Expression?>
       expressions; // May CONTAIN nulls for omitted elements: e.g. [1,2,,,]
 
   ArrayExpression(this.expressions);
 
   forEach(callback) {
-    if (expressions != null) {
-      for (Expression? exp in expressions!) {
-        if (exp != null) {
-          callback(exp);
-        }
+    for (Expression? exp in expressions) {
+      if (exp != null) {
+        callback(exp);
       }
     }
   }
@@ -613,7 +611,7 @@ class Property extends Node {
   bool get isSetter => kind == 'set';
   bool get isAccessor => isGetter || isSetter;
 
-  String get nameString => key is Name
+  String? get nameString => key is Name
       ? (key as Name).value
       : (key as LiteralExpression).value.toString();
 
@@ -645,8 +643,8 @@ class FunctionExpression extends Expression {
   String toString() => 'FunctionExpression';
 
   visitBy<T>(Visitor<T> v) => v.visitFunctionExpression(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
-      v.visitFunctionExpression(this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitFunctionExpression(
+      this, arg);
 }
 
 /// Comma-seperated expressions.
@@ -666,7 +664,7 @@ class SequenceExpression extends Expression {
 /// Expression of form: `+[argument]`, or using any of the unary operators:
 /// `+, -, !, ~, typeof, void, delete`
 class UnaryExpression extends Expression {
-  String operator; // May be: +, -, !, ~, typeof, void, delete
+  String? operator; // May be: +, -, !, ~, typeof, void, delete
   Expression argument;
 
   UnaryExpression(this.operator, this.argument);
@@ -683,7 +681,7 @@ class UnaryExpression extends Expression {
 /// `==, !=, ===, !==, <, <=, >, >=, <<, >>, >>>, +, -, *, /, %, |, ^, &, &&, ||, in, instanceof`
 class BinaryExpression extends Expression {
   Expression left;
-  String
+  String?
       operator; // May be: ==, !=, ===, !==, <, <=, >, >=, <<, >>, >>>, +, -, *, /, %, |, ^, &, &&, ||, in, instanceof
   Expression right;
 
@@ -704,12 +702,12 @@ class BinaryExpression extends Expression {
 /// `=, +=, -=, *=, /=, %=, <<=, >>=, >>>=, |=, ^=, &=`
 class AssignmentExpression extends Expression {
   Expression left;
-  String operator; // May be: =, +=, -=, *=, /=, %=, <<=, >>=, >>>=, |=, ^=, &=
+  String? operator; // May be: =, +=, -=, *=, /=, %=, <<=, >>=, >>>=, |=, ^=, &=
   Expression right;
 
   AssignmentExpression(this.left, this.operator, this.right);
 
-  bool get isCompound => operator.length > 1;
+  bool get isCompound => operator!.length > 1;
 
   forEach(callback) {
     callback(left);
@@ -724,7 +722,7 @@ class AssignmentExpression extends Expression {
 
 /// Expression of form: `++[argument]`, `--[argument]`, `[argument]++`, `[argument]--`.
 class UpdateExpression extends Expression {
-  String operator; // May be: ++, --
+  String? operator; // May be: ++, --
   Expression argument;
   bool isPrefix;
 
@@ -766,7 +764,7 @@ class CallExpression extends Expression {
   Expression callee;
   List<Expression> arguments;
 
-  CallExpression(this.callee, this.arguments, {this.isNew = false});
+  CallExpression(this.callee, this.arguments, {this.isNew= false});
   CallExpression.newCall(this.callee, this.arguments) : isNew = true;
 
   forEach(callback) {
@@ -849,9 +847,9 @@ class LiteralExpression extends Expression {
   bool get isBool => value is bool;
   bool get isNull => value == null;
 
-  String get stringValue => value as String;
-  num get numberValue => value as num;
-  bool get boolValue => value as bool;
+  String? get stringValue => value as String?;
+  num? get numberValue => value as num?;
+  bool? get boolValue => value as bool?;
 
   /// Converts the value to a string
   String get toName => value.toString();
@@ -867,7 +865,7 @@ class LiteralExpression extends Expression {
 /// A regular expression literal.
 class RegexpExpression extends Expression {
   /// The entire literal, including slashes and flags.
-  String regexp;
+  String? regexp;
 
   RegexpExpression(this.regexp);
 

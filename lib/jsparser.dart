@@ -33,7 +33,7 @@ Program parsejs(String text,
     offset = trimNoise(text, offset);
   }
   Lexer lexer = new Lexer(text,
-      filename: filename!,
+      filename: filename,
       currentLine: offset.line,
       index: offset.start,
       endOfFile: offset.end);
