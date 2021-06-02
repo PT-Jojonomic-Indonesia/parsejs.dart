@@ -10,17 +10,17 @@ abstract class Node {
   /// The parent of this node, or null if this is the [Program] node.
   ///
   /// If you transform the AST in any way, it is your own responsibility to update parent pointers accordingly.
-  Node parent;
+  Node? parent;
 
   /// Source-code offset.
-  int start, end;
+  int? start, end;
 
   /// 1-based line number.
-  int line;
+  int? line;
 
   /// Retrieves the filename from the enclosing [Program]. Returns null if the node is orphaned.
-  String get filename {
-    Program program = enclosingProgram;
+  String? get filename {
+    Program program = enclosingProgram!;
     if (program != null) return program.filename;
     return null;
   }
@@ -29,21 +29,21 @@ abstract class Node {
   String get location => "$filename:$line";
 
   /// Returns the [Program] node enclosing this node, possibly the node itself, or null if not enclosed in any program.
-  Program get enclosingProgram {
+  Program? get enclosingProgram {
     Node node = this;
     while (node != null) {
       if (node is Program) return node;
-      node = node.parent;
+      node = node.parent!;
     }
     return null;
   }
 
   /// Returns the [FunctionNode] enclosing this node, possibly the node itself, or null if not enclosed in any function.
-  FunctionNode get enclosingFunction {
+  FunctionNode? get enclosingFunction {
     Node node = this;
     while (node != null) {
       if (node is FunctionNode) return node;
-      node = node.parent;
+      node = node.parent!;
     }
     return null;
   }
@@ -62,7 +62,7 @@ abstract class Node {
 /// can host local variables.
 abstract class Scope extends Node {
   /// Variables declared in this scope, including the implicitly declared "arguments" variable.
-  Set<String> environment;
+  Set<String>? environment;
 }
 
 /// A collection of [Program] nodes.
@@ -86,7 +86,7 @@ class Programs extends Node {
 class Program extends Scope {
   /// Indicates where the program was parsed from.
   /// In principle, this can be anything, it is just a string passed to the parser for convenience.
-  String filename;
+  String? filename;
 
   List<Statement> body;
 
@@ -102,7 +102,7 @@ class Program extends Scope {
 
 /// A function, which may occur as a function expression, function declaration, or property accessor in an object literal.
 class FunctionNode extends Scope {
-  Name name;
+  Name? name;
   List<Name> params;
   Statement body;
 
@@ -113,7 +113,7 @@ class FunctionNode extends Scope {
   bool get isAccessor => parent is Property && (parent as Property).isAccessor;
 
   forEach(callback) {
-    if (name != null) callback(name);
+    if (name != null) callback(name!);
     params.forEach(callback);
     callback(body);
   }
@@ -133,7 +133,7 @@ class Name extends Node {
 
   /// Link to the enclosing [FunctionExpression], [Program], or [CatchClause] where this variable is declared
   /// (defaults to [Program] if undeclared), or `null` if this is not a variable.
-  Scope scope;
+  Scope? scope;
 
   /// True if this refers to a variable name.
   bool get isVariable =>
@@ -202,22 +202,22 @@ class ExpressionStatement extends Statement {
   String toString() => 'ExpressionStatement';
 
   visitBy<T>(Visitor<T> v) => v.visitExpressionStatement(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitExpressionStatement(
-      this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
+      v.visitExpressionStatement(this, arg);
 }
 
 /// Statement of form: `if ([condition]) then [then] else [otherwise]`.
 class IfStatement extends Statement {
   Expression condition;
   Statement then;
-  Statement otherwise; // May be null.
+  Statement? otherwise; // May be null.
 
   IfStatement(this.condition, this.then, [this.otherwise]);
 
   forEach(callback) {
     callback(condition);
     callback(then);
-    if (otherwise != null) callback(otherwise);
+    if (otherwise != null) callback(otherwise!);
   }
 
   String toString() => 'IfStatement';
@@ -314,7 +314,7 @@ class SwitchStatement extends Statement {
 
 /// Clause in a switch: `case [expression]: [body]` or `default: [body]` if [expression] is null.
 class SwitchCase extends Node {
-  Expression expression; // May be null (for default clause)
+  Expression? expression; // May be null (for default clause)
   List<Statement> body;
 
   SwitchCase(this.expression, this.body);
@@ -324,7 +324,7 @@ class SwitchCase extends Node {
   bool get isDefault => expression == null;
 
   forEach(callback) {
-    if (expression != null) callback(expression);
+    if (expression != null) callback(expression!);
     body.forEach(callback);
   }
 
@@ -491,8 +491,8 @@ class FunctionDeclaration extends Statement {
   String toString() => 'FunctionDeclaration';
 
   visitBy<T>(Visitor<T> v) => v.visitFunctionDeclaration(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitFunctionDeclaration(
-      this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
+      v.visitFunctionDeclaration(this, arg);
 }
 
 /// Statement of form: `var [declarations];`
@@ -506,8 +506,8 @@ class VariableDeclaration extends Statement {
   String toString() => 'VariableDeclaration';
 
   visitBy<T>(Visitor<T> v) => v.visitVariableDeclaration(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitVariableDeclaration(
-      this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
+      v.visitVariableDeclaration(this, arg);
 }
 
 /// Variable declaration: `[name]` or `[name] = [init]`.
@@ -525,8 +525,8 @@ class VariableDeclarator extends Node {
   String toString() => 'VariableDeclarator';
 
   visitBy<T>(Visitor<T> v) => v.visitVariableDeclarator(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitVariableDeclarator(
-      this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
+      v.visitVariableDeclarator(this, arg);
 }
 
 /// Statement of form: `debugger;`
@@ -556,15 +556,17 @@ class ThisExpression extends Expression {
 
 /// Expression of form: `[ [expressions] ]`
 class ArrayExpression extends Expression {
-  List<Expression>
+  List<Expression?>?
       expressions; // May CONTAIN nulls for omitted elements: e.g. [1,2,,,]
 
   ArrayExpression(this.expressions);
 
   forEach(callback) {
-    for (Expression exp in expressions) {
-      if (exp != null) {
-        callback(exp);
+    if (expressions != null) {
+      for (Expression? exp in expressions!) {
+        if (exp != null) {
+          callback(exp);
+        }
       }
     }
   }
@@ -643,8 +645,8 @@ class FunctionExpression extends Expression {
   String toString() => 'FunctionExpression';
 
   visitBy<T>(Visitor<T> v) => v.visitFunctionExpression(this);
-  visitBy1<T, A>(Visitor1<T, A> v, A arg) => v.visitFunctionExpression(
-      this, arg);
+  visitBy1<T, A>(Visitor1<T, A> v, A arg) =>
+      v.visitFunctionExpression(this, arg);
 }
 
 /// Comma-seperated expressions.
@@ -764,7 +766,7 @@ class CallExpression extends Expression {
   Expression callee;
   List<Expression> arguments;
 
-  CallExpression(this.callee, this.arguments, {this.isNew= false});
+  CallExpression(this.callee, this.arguments, {this.isNew = false});
   CallExpression.newCall(this.callee, this.arguments) : isNew = true;
 
   forEach(callback) {
@@ -838,7 +840,7 @@ class LiteralExpression extends Expression {
   dynamic value;
 
   /// The verbatim source-code representation of the literal.
-  String raw;
+  String? raw;
 
   LiteralExpression(this.value, [this.raw]);
 

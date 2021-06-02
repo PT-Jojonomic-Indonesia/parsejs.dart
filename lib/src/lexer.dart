@@ -20,12 +20,12 @@ class ParseError {
 
 class Token {
   int startOffset;
-  int line;
-  int type;
+  int? line;
+  int? type;
   String
       text; // text exactly as in source code or null for EOF or tokens with type > 31
   bool afterLinebreak; // true if first token after a linebreak
-  String
+  String?
       value; // value of identifier or string literal after escapes, null for other tokens
 
   /// For tokens that can be used as binary operators, this indicates their relative precedence.
@@ -35,7 +35,7 @@ class Token {
 
   Token(this.startOffset, this.line, this.type, this.afterLinebreak, this.text);
 
-  String toString() => text != null ? text : typeToString(type);
+  String toString() => text != null ? text : typeToString(type!);
 
   String get detailedString => "[$startOffset, $text, $type, $afterLinebreak]";
 
@@ -176,37 +176,37 @@ class Lexer {
       {this.filename, this.currentLine: 1, this.index: 0, this.endOfFile}) {
     input = text.codeUnits;
     if (endOfFile == null) {
-      endOfFile = input.length;
+      endOfFile = input!.length;
     }
   }
 
-  List<int> input;
+  List<int>? input;
   int index = 0;
-  int endOfFile;
-  int tokenStart;
-  int tokenLine;
+  int? endOfFile;
+  int? tokenStart;
+  int? tokenLine;
   int currentLine; // We use 1-based line numbers.
-  bool seenLinebreak;
-  String filename;
+  bool? seenLinebreak;
+  String? filename;
 
-  int get current => index == endOfFile ? char.NULL : input[index];
+  int get current => index == endOfFile ? char.NULL : input![index];
 
   int next() {
     ++index;
-    return index == endOfFile ? char.NULL : input[index];
+    return index == endOfFile ? char.NULL : input![index];
   }
 
   void fail(String message) {
-    throw new ParseError(message, filename, currentLine, tokenStart, index);
+    throw new ParseError(message, filename!, currentLine, tokenStart!, index);
   }
 
-  Token emitToken(int type, [String value]) {
-    return new Token(tokenStart, tokenLine, type, seenLinebreak, value);
+  Token emitToken(int type, [String? value]) {
+    return new Token(tokenStart!, tokenLine!, type, seenLinebreak!, value!);
   }
 
   Token emitValueToken(int type) {
-    String value = new String.fromCharCodes(input.getRange(tokenStart, index));
-    return new Token(tokenStart, tokenLine, type, seenLinebreak, value);
+    String value = new String.fromCharCodes(input!.getRange(tokenStart!, index));
+    return new Token(tokenStart!, tokenLine!, type, seenLinebreak!, value);
   }
 
   Token scanNumber(int x) {
@@ -270,7 +270,7 @@ class Lexer {
 
   Token scanComplexName(int x) {
     // name with unicode escape sequences
-    List<int> buffer = new List<int>.from(input.getRange(tokenStart, index));
+    List<int> buffer = new List<int>.from(input!.getRange(tokenStart!, index));
     while (true) {
       if (x == char.BACKSLASH) {
         x = next();
@@ -635,7 +635,7 @@ class Lexer {
       x = next();
     }
     return emitToken(Token.REGEXP,
-        new String.fromCharCodes(input.getRange(slash.startOffset, index)));
+        new String.fromCharCodes(input!.getRange(slash.startOffset, index)));
   }
 
   Token scanStringLiteral(int x) {
